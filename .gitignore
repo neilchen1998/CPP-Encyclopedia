@@ -1,0 +1,6 @@
+# build
+_build/*
+
+# mac
+.DS_Store
+__MACOSX/
