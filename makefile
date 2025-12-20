@@ -1,6 +1,10 @@
 CXX = g++
+
+INCLUDE = -I./include/
+
 CXXFLAGS = -Wall -std=c++2b
 CXXFLAGS += -I/opt/homebrew/include
+CXXFLAGS += $(INCLUDE)
 LDFLAGS =
 LDFLAGS += -L/opt/homebrew/lib -lfmt
 
@@ -13,14 +17,14 @@ TARGET = $(BUILD_DIR)/app
 all: $(TARGET)
 
 $(TARGET): $(BUILD_DIR)/main.o
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(BUILD_DIR)/main.o $(LDFLAGS)
+	@$(CXX) $(CXXFLAGS) -o $(TARGET) $(BUILD_DIR)/main.o $(LDFLAGS)
 
 $(BUILD_DIR)/main.o: main.cc
 	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c main.cc -o $(BUILD_DIR)/main.o
+	@$(CXX) $(CXXFLAGS) -c main.cc -o $(BUILD_DIR)/main.o
 
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -f *.o $(BUILD_DIR)
+	@rm -rf $(BUILD_DIR)
