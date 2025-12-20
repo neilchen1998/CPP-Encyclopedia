@@ -163,6 +163,82 @@ The compiler will get confused by the different *operator()*'s. Therefore we nee
 We need to provide the actual lambda functions such that the compiler can fill them into *overload* template.
 This is thanks to the advent of **Class Template argument Deduction (CTAD)** in modern C++.
 
+### `std::invoke`
+
+`std::invoke` is a method to invoke callable objects in modern C++.
+There are several types of callable ojbect, including: a function, a lambda, a member pointer.
+Prior to C++17, one needs to write several different implementations in order to accomodate all different types of callable objects.
+
+In this chapter, we are going to call different types of callables using *std::invoke*.
+
+Full source code:
+
+```cpp
+#include <fmt/core.h>   // fmt::print
+
+#include <functional>   // std::invoke
+
+/// @brief Logs and invokes a callable
+/// @tparam Callable The type of the callable (function, lambda, member pointer)
+/// @tparam ...Args The type of the arguments
+/// @param func The callable instance (a function or a lambda)
+/// @param ...args The arguments to be forwarded to the given callable
+template <typename Callable, typename... Args>
+void LogAndCall(Callable&& func, Args&&... args)
+{
+    fmt::println("Executing call...");
+
+    std::invoke(std::forward<Callable>(func), std::forward<Args>(args)...);
+}
+
+struct Foo
+{
+    Foo (int n) : num_(n) {}
+
+    /// @brief Prints the sum of num_ and the given argument
+    /// @param i An integer
+    void print_add (int i) const
+    {
+        fmt::println("{}", (i + num_));
+    }
+
+    int num_;
+};
+
+auto print_int = [](int v)
+{
+    fmt::println("{}", v);
+};
+
+int main()
+{
+    Foo e1 {111}, e2 {222};
+
+    // the old way
+    // (e2.*&Foo::print_add)(2);
+
+    std::invoke(&Foo::print_add, e1, 1);
+    std::invoke(&Foo::print_add, e2, 2);
+
+    std::invoke(print_int, 12);
+
+    LogAndCall(&Foo::print_add, e2, 44);
+
+    return 0;
+}
+```
+
+We create a class that has a member function *print_add*.
+In the old days, we need to first get the address of the member function by &Foo::print_add*,
+then we need to dereference it by adding *\** in front to be *\*&Foo:print_add*, then finally adding *.* in front of the function pointer to call it, ending up with *(e2.\*&Foo::print_add)(2)*.
+
+The old approach is very hairy, therefore we are using *std::invoke* instead.
+We can just pass the memory address of **Foo::print_add** as the first argument, the instance of the class as the second argument, and an integer as the third argument to *std::invoke*.
+
+The place where *std::invoke* truely shines is when we create a template that takes all different type of callable objects.
+Look at the example where **LogAndCall** takes a callable and some number of arguments.
+We use *std::invoke* under the hood by forwarding the callable object to it and we do not need to worry about the type of the callable, be it lambda, or function pointer.
+
 # Reference
 
 * [Class Template Argument Deduction (CTAD)](https://en.cppreference.com/w/cpp/language/class_template_argument_deduction.html)
