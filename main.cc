@@ -1,4 +1,3 @@
-C
 /*
  * Copyright 2025 Neil Chen
  *
