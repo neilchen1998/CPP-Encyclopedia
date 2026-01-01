@@ -24,7 +24,7 @@ $(BUILD_DIR)/main.o: main.cc
 	@$(CXX) $(CXXFLAGS) -c main.cc -o $(BUILD_DIR)/main.o
 
 run: $(TARGET)
-	./$(TARGET)
+	@./$(TARGET)
 
 clean:
 	@rm -rf $(BUILD_DIR)

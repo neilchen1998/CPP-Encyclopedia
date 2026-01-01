@@ -3,8 +3,8 @@
 ## Introduction
 
 This is my journey of learning amazing features from modern C++.
-In school we might have learned C++, but missed out the latest and greatest parts of modern C++.
-I document what I have learn and the use cases.
+In school we might have learned C++, but missed out some of the latest and greatest parts of modern C++.
+I document what I have learned on my journey.
 I hope this can benefit you.
 
 ## Features
@@ -238,6 +238,140 @@ We can just pass the memory address of **Foo::print_add** as the first argument,
 The place where *std::invoke* truely shines is when we create a template that takes all different type of callable objects.
 Look at the example where **LogAndCall** takes a callable and some number of arguments.
 We use *std::invoke* under the hood by forwarding the callable object to it and we do not need to worry about the type of the callable, be it lambda, or function pointer.
+
+### `std::optional`
+
+`std::optional` was introduced in C++17. It offers a method to hold a value that may or may not be present.
+An instance of **optional** either contains a value or does not.
+
+In C++, RVO (return value optimization) offers a method to avoid unnecessary construction and destruction when it comes to returning a value in functions.
+However, in order for this to work, the type of the return needs to match the return type of the function exactly.
+
+Here is a function **Entity** and we print out the function calls explictly so that we can understand what happens under the hood.
+
+```cpp
+#include <optional>
+#include <fmt/core.h>   // fmt::print
+
+struct Entity
+{
+    Entity(int a) noexcept
+    {
+        fmt::println("Constructor w/ argument");
+    }
+
+    Entity() noexcept
+    {
+        fmt::println("Constructor w/o argument");
+    }
+
+    Entity(Entity&&) noexcept
+    {
+        fmt::println("Move constructor");
+    }
+
+    Entity(const Entity&) noexcept
+    {
+        fmt::println("Copy constructor");
+    }
+
+    ~Entity() noexcept
+    {
+        fmt::println("Destructor");
+    }
+
+    Entity& operator=(const Entity&) noexcept
+    {
+        fmt::println("Copy assignment");
+
+        return *this;
+    }
+
+    Entity& operator=(Entity&&) noexcept
+    {
+        fmt::println("Move assignment");
+
+        return *this;
+    }
+};
+
+std::optional<Entity> getEntity()
+{
+    return Entity{42};
+}
+
+std::optional<Entity> getEntityRVO()
+{
+    return std::optional<Entity>{42};
+}
+
+std::optional<Entity> getEntityInPlace()
+{
+    return std::optional<Entity>{std::in_place, 42};
+}
+
+std::optional<Entity> getEntityMakeOptional()
+{
+    return std::make_optional<Entity>(42);
+}
+
+int main()
+{
+    {
+        fmt::println("getEntity:");
+        getEntity();
+        fmt::println("");
+    }
+
+    {
+        fmt::println("getEntityRVO:");
+        getEntityRVO();
+        fmt::println("");
+    }
+
+    {
+        fmt::println("getEntityInPlace:");
+        getEntityInPlace();
+        fmt::println("");
+    }
+
+    {
+        fmt::println("getEntityMakeOptional:");
+        getEntityMakeOptional();
+        fmt::println("");
+    }
+
+    return 0;
+}
+```
+
+One may write a function like *getEntity* and think that RVO is acheived.
+However, after running it, you can find the following functions are called:
+
+```bash
+getEntity:
+Constructor w/ argument
+Move constructor
+Destructor
+Destructor
+```
+
+Ignore the last **Destructor** since that when the instance runs out of scope.
+The constructor was called, followed by a move operation and a destructor.
+This is due to the compiler performs implicit conversion to convert **Entity** to **std::optional<Entity>**.
+As we mentioned earlier, RVO can only be achieved if the type of the return value matches exactly the function signature.
+
+If we run the other functions, like *getEntityRVO* or *getEntityInPlace*.
+We can see that only the constructor is called:
+
+```bash
+getEntityInPlace:
+Constructor w/ argument
+Destructor
+```
+
+Since we explictly construct an **std::optional<Entity>**, the compiler performs RVO.
+*std::make_optional* and *std::in_place* can also be used to acheive the same result.
 
 # Reference
 
